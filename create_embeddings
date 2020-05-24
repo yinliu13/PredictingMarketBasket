@@ -1,2 +1,39 @@
-import gensim
+import multiprocessing
 
+import gensim
+import pandas as pd
+from gensim.models import Word2Vec
+
+#import datasets
+
+train = pd.read_csv('./data/proef_order_products__train.csv')
+prior = pd.read_csv('./data/proef_order_products__prior.csv')
+products = pd.read_csv('./data/products.csv')
+
+#turn productIDs into strings first
+print(train  )
+string_train = train["product_id"].astype(str)
+string_prior = prior["product_id"].astype(str)
+#print(string_train )
+
+products_train = train.groupby("order_id")
+products_train_order = products_train.apply(lambda x: list(x["product_id"]))
+products_prior = prior.groupby("order_id")
+products_prior_order = products_prior.apply(lambda x: list(x["product_id"]))
+#table = products_train.apply(lambda x: x["product_id"].tolist())
+
+#products_prior = prior.groupby("order_id")
+print("this is train", products_train_order )
+print("this is prior", products_prior_order )
+allproducts = products_prior_order.append(products_train_order).values
+
+cores = multiprocessing.cpu_count()
+print(cores)
+print('all', allproducts, )
+
+w2v = Word2Vec(allproducts, size=50, window=5, min_count=50, workers =cores-1)
+w2v.save('embeddings.bin')
+new = Word2Vec.load('embeddings.bin')
+print(new)
+def baskettolist(baskets):
+    baskets["product_id"].tolist()
